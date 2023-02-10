@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="notice">
+
+<!-- 서브쿼리 안쓰면 listdate가 안먹음! -->
+	<select id="list" parameterType="HashMap" resultType="HashMap">
+		SELECT
+		ROW_NUMBER() OVER() AS nno, listdate AS n_date, r.*
+		FROM 
+		(
+		SELECT *
+		FROM noticeview3 WHERE n_del=1
+		)r
+		ORDER BY n_no DESC
+		LIMIT 0, 10
+	</select>
+
+	<insert id="write" parameterType="HashMap">
+		INSERT INTO notice SET
+		n_title =
+		#{title },
+		n_content = #{content },
+		member_no = (SELECT member_no FROM
+		member WHERE member_id=#{id })
+	</insert>
+	
+	<select id="noticeDetailAjax" parameterType="HashMap" resultType="HashMap"> 
+      SELECT n.n_no, n.n_title, n.n_content, n.n_del, m.member_name,
+      m.member_id, date_format(n.n_date,'%Y-%m-%d %H:%i:%s') AS n_date
+      , if(m.member_id=#{id}, 1,0) as auth
+      FROM notice n join member m on n.member_no=m.member_no
+      WHERE n_del=1 AND n_no=#{no }
+    </select>
+    
+    <delete id="noticeDel" parameterType="HashMap"> 
+		DELETE FROM notice
+		WHERE n_no = #{no} 
+		AND member_no = (SELECT member_no FROM member WHERE member_id=#{id})
+	</delete>
+	
+	<update id="noticeUpdate" parameterType="HashMap">
+		UPDATE notice SET
+		n_title = #{title}, n_content = #{content}
+		WHERE n_no=#{no} 
+		AND member_no = (SELECT member_no FROM member WHERE member_id = #{id})
+	</update>
+	<!-- 서브쿼리: member_no를 정확하게 가려내기위해. -->
+	
+
+	
+</mapper>
+
